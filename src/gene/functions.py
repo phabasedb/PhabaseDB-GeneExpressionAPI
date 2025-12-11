@@ -1,7 +1,7 @@
 import re
 import pandas as pd
-from utils import read_dataset
-from constants import REQ_GENE_COLS, REQ_META_COLS
+from src.gene.utils import read_dataset
+from src.gene.constants import REQ_GENE_COLS, REQ_META_COLS
 
 # GENE DATA FOR A ID
 def get_gene_data(dataset: str, gene_id: str) -> tuple[dict, int]:
