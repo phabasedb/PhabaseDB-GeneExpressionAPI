@@ -1,90 +1,150 @@
 # Expression Data API
 
-A lightweight Flask service that exposes gene expression and metadata queries over HTTP.  
-Clients can fetch per‑gene expression profiles, batch query multiple IDs with selected conditions, and retrieve dataset metadata.
+Un servicio Flask ligero que expone consultas de expresión génica y metadatos a través de HTTP.  
+Los clientes pueden obtener perfiles de expresión por gen, realizar consultas por lotes de varios ID con condiciones seleccionadas y recuperar metadatos de conjuntos de datos.
 
-## Prerequisites
+---
 
-1. **Python 3.8+**
-2. **Flask**
-3. **Pandas**
-4. **Gunicorn**
-
-## Project Structure & Data Organization
+## Project Structure
 
 ```bash
-project-root/
-├── app.py # Defines Flask routes/endpoints
-├── functions.py # Core business logic for data retrieval
-├── constants.py # Required column sets and base data directory
-├── utils.py # CSV loading helper (read_dataset)
+📦PhabaseDB-GeneExpressionAPI
+ ┣ 📂src
+ ┃ ┣ 📂gene
+ ┃ ┃ ┣ 📂repository
+ ┃ ┃ ┃ ┣ 📜csv_repository.py
+ ┃ ┃ ┃ ┗ 📜__init__.py
+ ┃ ┃ ┣ 📂routes
+ ┃ ┃ ┃ ┣ 📜routes.py
+ ┃ ┃ ┃ ┗ 📜__init__.py
+ ┃ ┃ ┣ 📂services
+ ┃ ┃ ┃ ┣ 📜expression_helpers.py
+ ┃ ┃ ┃ ┣ 📜gene_service.py
+ ┃ ┃ ┃ ┣ 📜meta_service.py
+ ┃ ┃ ┃ ┣ 📜query_service.py
+ ┃ ┃ ┃ ┗ 📜__init__.py
+ ┃ ┃ ┣ 📂utils
+ ┃ ┃ ┃ ┣ 📜read_file.py
+ ┃ ┃ ┃ ┣ 📜resolve_file.py
+ ┃ ┃ ┃ ┣ 📜validators.py
+ ┃ ┃ ┃ ┗ 📜__init__.py
+ ┃ ┃ ┣ 📜constants.py
+ ┃ ┃ ┗ 📜__init__.py
+ ┃ ┣ 📜app.py
+ ┃ ┣ 📜config.py
+ ┃ ┗ 📜wsgi.py
+ ┣ 📜.env-sample
+ ┣ 📜README.md
+ ┗ 📜requirements.txt
 ```
 
-## Configuration Notes
+Currently, the API is focused on **gene-level expression data** and all related logic lives under the `gene/` module.
 
-- Database directory
+At a high level:
 
-  Edit the ruta variable in `constants.py` or define your own `BASE_DIR` environment variable.
+Each folder has a clear responsibility:
 
-- Port
+- **repository**: reads and validates expression datasets
+- **services**: contains the core query logic (genes, transcripts, batch queries)
+- **utils**: shared helpers and input validation
+- **routes**: defines the HTTP endpoints exposed by the API
+- **constants**: definition of reusable constants
 
-  - By default it is on port 4002, but you can set it to the port of your choice.
+---
 
-    ```bash
-    app.run(host="0.0.0.0", port=####)
-    ```
+## 📦 Installation & Environment Setup
 
-## Run the Flask app
+This project uses Python and Flask. All dependencies are listed in `requirements.txt`.
+
+### Create and activate a virtual environment
 
 ```bash
-export FLASK_APP=app.py
-flask run --host=0.0.0.0 --port=4002
+# Create virtual environment
+python -m venv .venv
+
+# Activate (Windows)
+.\.venv\Scripts\activate
+
+# Activate (Linux / macOS)
+source .venv/bin/activate
 ```
 
-or simply:
+### Install dependencies
 
 ```bash
-python app.py
+# Clear pip cache (recommended)
+pip cache purge
+
+# Install requirements
+pip install -r requirements.txt
 ```
 
-The service will listen on 0.0.0.0:4002.
+---
+
+## Environment Configuration (.env)
+
+The API relies on external expression datasets that must be configured via environment variables.
+
+You must create a `.env` file and define the directory where expression files are located.
+
+You have two options:
+
+### Option 1: Use an external directory
+
+Provide an absolute path to your expression datasets.
+
+### Option 2: Use the project directory
+
+You may place your datasets inside the project under a folder named `expdb/`.
+
+- The `expdb/` directory is ignored by Git
+- Safe for local datasets and large files
+
+---
 
 ## API Endpoints
 
-1. Get expression for one gene:
+The API currently exposes three endpoints related to gene expression queries.
 
-   `GET /expression/gene/<dataset>/<gene_id>`
+All routes are defined in:
 
-   - Path parameters
+```bash
+src/gene/routes/routes.py
+```
 
-     - `dataset` (string): name of the CSV file (relative to `BASE_DIR`)
+Refer to that file for the most up-to-date list of available endpoints and their paths.
 
-     - `gene_id` (string): gene identifier to query
+---
 
-2. Batch query gene/transcript IDs
+## Running the Application
 
-   `POST /expression/gene/ids`
+### Development (Windows / local)
 
-   - Request JSON body:
+For local development and debugging, the API can be started using Flask’s built-in server.
 
-     ```json
-     {
-        "dataset": "dataset1.csv",
-        "gene_ids": ["GENE1", "TRANS2", "GENE3"],
-        "columns": ["condA", "condB", "condC
-     }
-     ```
+Make sure your `.env` file includes the following variables:
 
-3. Get dataset metadata
+```env
+FLASK_ENV=development
+FLASK_APP=src.wsgi:app
+```
 
-   `GET /expression/metadata/<dataset>`
+Then run:
 
-   - Path parameter
+```bash
+flask run --host=0.0.0.0 --port=4002 --reload
+```
 
-     - `dataset` (string): CSV file name
+This enables:
 
-Responses:
+- Hot reloading
+- Debug-friendly error messages
+- Faster local iteration
 
-- 200 OK → JSON {status:"sucess", message:"...", result: "...{('Check in functions.py')}..."}
+### Production Deployment
 
-- 4xx/5xx → JSON { status: "error", message: "..." }
+For production environments, the application should be served using Gunicorn.
+
+Gunicorn provides a more robust and performant WSGI server suitable for deployment behind a reverse proxy (e.g. Nginx).
+
+⚠️ Flask’s built-in server is not recommended for production use.
