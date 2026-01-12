@@ -1,0 +1,31 @@
+# --------------------
+# META API Response Codes
+# --------------------
+# Success
+META_FOUND = "META_FOUND" # 
+META_NOT_FOUND = "META_NOT_FOUND"
+
+# Errors (shared)
+INVALID_INPUT = "INVALID_INPUT"
+FILE_NOT_FOUND = "FILE_NOT_FOUND"
+FILE_READ_ERROR = "FILE_READ_ERROR"
+INVALID_DATASET = "INVALID_DATASET"
+INTERNAL_ERROR = "INTERNAL_ERROR"
+
+# --------------------
+# GENE API Response Codes
+# --------------------
+# Success
+EXPR_FOUND = "EXPR_FOUND"
+EXPR_NOT_FOUND = "EXPR_NOT_FOUND"
+
+# --------------------
+# MULTI-GENE API Response Codes
+# --------------------
+# Success
+MULTI_EXPR_FOUND = "MULTI_EXPR_FOUND"
+MULTI_EXPR_PARTIAL = "MULTI_EXPR_PARTIAL"
+MULTI_EXPR_NOT_FOUND = "MULTI_EXPR_NOT_FOUND"
+
+# Errors
+INVALID_JSON = "INVALID_JSON"

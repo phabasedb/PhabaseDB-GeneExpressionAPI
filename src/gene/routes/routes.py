@@ -12,6 +12,26 @@ from src.gene.utils.validators import (
     validate_expression_query_request)
 from src.gene.repository.csv_repository import DatasetSchemaError
 
+# API codes
+from src.gene.api_codes import (
+    META_FOUND,
+    META_NOT_FOUND,
+
+    EXPR_FOUND,
+    EXPR_NOT_FOUND,
+
+    MULTI_EXPR_FOUND,
+    MULTI_EXPR_PARTIAL,
+    MULTI_EXPR_NOT_FOUND,
+
+    INVALID_JSON,
+    INVALID_INPUT,
+    FILE_NOT_FOUND,
+    FILE_READ_ERROR,
+    INVALID_DATASET,
+    INTERNAL_ERROR
+);
+
 
 expression_bp  = Blueprint("expression", __name__)
 
@@ -26,28 +46,27 @@ def expression_meta(organism: str, feature: str):
     """
     try:
         # Input validation (user)
-        validate_meta_request(
-            organism=organism,
-            feature=feature,
-        )
+        validate_meta_request(organism=organism, feature=feature)
 
         # Data processing (use case)
-        data = get_meta(
-            organism=organism,
-            feature=feature,
-        )
+        data = get_meta(organism=organism, feature=feature)
 
         # Standard response (success)
+        code = META_FOUND if data else META_NOT_FOUND
+        message = "Metadata retrieved successfully."
         return jsonify({
             "status": "success",
-            "message": "Metadata retrieved successfully.",
+            "code": code,
+            "message": message,
             "data": data,
         }), 200
+
 
     # User input errors
     except ValidationError as e:
         return jsonify({
             "status": "error",
+            "code": INVALID_INPUT,
             "message": str(e),
             "data": [],
         }), 400
@@ -56,6 +75,7 @@ def expression_meta(organism: str, feature: str):
     except FileNotFoundError as e:
         return jsonify({
             "status": "error",
+            "code": FILE_NOT_FOUND,
             "message": str(e),
             "data": [],
         }), 404
@@ -64,6 +84,7 @@ def expression_meta(organism: str, feature: str):
     except IOError as e:
         return jsonify({
             "status": "error",
+            "code": FILE_READ_ERROR,
             "message": str(e),
             "data": [],
         }), 500
@@ -72,6 +93,7 @@ def expression_meta(organism: str, feature: str):
     except DatasetSchemaError as e:
         return jsonify({
             "status": "error",
+            "code": INVALID_DATASET,
             "message": str(e),
             "data": [],
         }), 500
@@ -80,7 +102,8 @@ def expression_meta(organism: str, feature: str):
     except Exception:
         return jsonify({
             "status": "error",
-            "message": "Internal server error. Unexpected, please contact the administrator.",
+            "code": INTERNAL_ERROR,
+            "message": "Internal server error.",
             "data": [],
         }), 500
 
@@ -116,16 +139,12 @@ def expression_by_gene_id(
             gene_id=gene_id,
         )
 
-        # Dynamic message
-        message = (
-            f"Expression data retrieved for gene '{gene_id}'."
-            if data
-            else f"No expression data found for gene '{gene_id}'."
-        )
-
         # Standard response (success)
+        code = EXPR_FOUND if data else EXPR_NOT_FOUND
+        message = f"Expression data retrieved for gene '{gene_id}'."
         return jsonify({
             "status": "success",
+            "code": code,
             "message": message,
             "data": data,
         }), 200
@@ -134,6 +153,7 @@ def expression_by_gene_id(
     except ValidationError as e:
         return jsonify({
             "status": "error",
+            "code": INVALID_INPUT,
             "message": str(e),
             "data": [],
         }), 400
@@ -142,6 +162,7 @@ def expression_by_gene_id(
     except FileNotFoundError as e:
         return jsonify({
             "status": "error",
+            "code": FILE_NOT_FOUND,
             "message": str(e),
             "data": [],
         }), 404
@@ -150,6 +171,7 @@ def expression_by_gene_id(
     except IOError as e:
         return jsonify({
             "status": "error",
+            "code": FILE_READ_ERROR,
             "message": str(e),
             "data": [],
         }), 500
@@ -158,6 +180,7 @@ def expression_by_gene_id(
     except DatasetSchemaError as e:
         return jsonify({
             "status": "error",
+            "code": INVALID_DATASET,
             "message": str(e),
             "data": [],
         }), 500
@@ -166,6 +189,7 @@ def expression_by_gene_id(
     except Exception:
         return jsonify({
             "status": "error",
+            "code": INTERNAL_ERROR,
             "message": "Internal server error.",
             "data": [],
         }), 500
@@ -191,6 +215,7 @@ def expression_by_ids(organism: str, data_type: str, feature: str):
         # Invalid JSON body
         return jsonify({
             "status": "error",
+            "code": INVALID_JSON,
             "message": "Invalid JSON body, please verify.",
             "data": []
         }), 400
@@ -220,20 +245,21 @@ def expression_by_ids(organism: str, data_type: str, feature: str):
 
         # Dynamic message
         if data and not not_found_ids:
+            code = MULTI_EXPR_FOUND
             message = f"Expression data retrieved for {len(data)} record(s)."
         elif data and not_found_ids:
-            message = (
-                f"Expression data retrieved for {len(data)} record(s). "
-                f"{len(not_found_ids)} ID(s) were not found."
-            )
+            code = MULTI_EXPR_PARTIAL
+            message = f"Expression data retrieved for {len(data)} record(s). {len(not_found_ids)} ID(s) were not found."
         else:
+            code = MULTI_EXPR_NOT_FOUND
             message = "No expression data found for the given IDs."
 
         # Standard response (success)
         response = {
             "status": "success",
+            "code": code,
             "message": message,
-            "data": data
+            "data": data,
         }
 
         if not_found_ids:
@@ -245,6 +271,7 @@ def expression_by_ids(organism: str, data_type: str, feature: str):
     except ValidationError as e:
         return jsonify({
             "status": "error",
+            "code": INVALID_INPUT,
             "message": str(e),
             "data": []
         }), 400
@@ -253,6 +280,7 @@ def expression_by_ids(organism: str, data_type: str, feature: str):
     except FileNotFoundError as e:
         return jsonify({
             "status": "error",
+            "code": FILE_NOT_FOUND,
             "message": str(e),
             "data": []
         }), 404
@@ -261,6 +289,7 @@ def expression_by_ids(organism: str, data_type: str, feature: str):
     except IOError as e:
         return jsonify({
             "status": "error",
+            "code": FILE_READ_ERROR,
             "message": str(e),
             "data": []
         }), 500
@@ -269,14 +298,16 @@ def expression_by_ids(organism: str, data_type: str, feature: str):
     except DatasetSchemaError as e:
         return jsonify({
             "status": "error",
+            "code": INVALID_DATASET,
             "message": str(e),
             "data": []
         }), 500
 
     # Unexpected error
-    except Exception as e:
+    except Exception:
         return jsonify({
             "status": "error",
-            "message": f"Unexpected server error: {str(e)}",
-            "data": []
+            "code": INTERNAL_ERROR,
+            "message": "Internal server error.",
+            "data": [],
         }), 500
