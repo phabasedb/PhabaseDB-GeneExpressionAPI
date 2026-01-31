@@ -6,10 +6,12 @@ from src.gene.services.meta_service import get_meta
 from src.gene.services.gene_service import get_expression_by_gene_id
 from src.gene.services.query_service import get_expression_by_ids
 from src.gene.utils.validators import (
+    IdsLimitExceededError,
     ValidationError, 
     validate_meta_request, 
     validate_gene_request,
     validate_expression_query_request)
+from src.gene.services.query_service import InvalidColumnsError
 from src.gene.repository.csv_repository import DatasetSchemaError
 
 # API codes
@@ -23,6 +25,8 @@ from src.gene.api_codes import (
     MULTI_EXPR_FOUND,
     MULTI_EXPR_PARTIAL,
     MULTI_EXPR_NOT_FOUND,
+    IDS_LIMIT_EXCEEDED,
+    INVALID_COLUMNS,
 
     INVALID_JSON,
     INVALID_INPUT,
@@ -266,6 +270,22 @@ def expression_by_ids(organism: str, data_type: str, feature: str):
             response["not_found_ids"] = not_found_ids
 
         return jsonify(response), 200
+
+    except IdsLimitExceededError as e:
+        return jsonify({
+            "status": "error",
+            "code": IDS_LIMIT_EXCEEDED,
+            "message": str(e),
+            "data": []
+        }), 400
+    
+    except InvalidColumnsError as e:
+        return jsonify({
+            "status": "error",
+            "code": INVALID_COLUMNS,
+            "message": str(e),
+            "data": []
+        }), 400
 
     # User input errors
     except ValidationError as e:

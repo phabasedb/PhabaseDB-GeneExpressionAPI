@@ -2,6 +2,10 @@ from src.gene.repository.csv_repository import load_expression_df
 from src.gene.services.expression_helpers import safe_float
 from src.gene.utils.validators import ValidationError
 
+class InvalidColumnsError(ValidationError):
+    pass
+
+
 def get_expression_by_ids(
     organism: str,
     data_type: str,
@@ -26,7 +30,8 @@ def get_expression_by_ids(
     # Column validation
     invalid_cols = [c for c in columns if c not in df.columns]
     if invalid_cols:
-        raise ValidationError(f"Invalid columns requested: {invalid_cols}")
+        raise InvalidColumnsError(
+            f"Invalid columns requested: {invalid_cols}")
 
     data = []
     processed_transcripts = set()  # To avoid duplicates

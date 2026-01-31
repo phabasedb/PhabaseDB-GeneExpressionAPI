@@ -4,6 +4,9 @@
 class ValidationError(Exception):
     pass
 
+class IdsLimitExceededError(ValidationError):
+    pass
+
 # --------------------
 # VARIABLE REUSABLES
 # --------------------
@@ -54,6 +57,8 @@ def validate_gene_request(
 # --------------------
 # IDS MULTI-QUERY VALIDATION
 # --------------------
+MAX_IDS = 50
+
 def validate_expression_query_request(
     organism: str,
     data_type: str,
@@ -82,6 +87,11 @@ def validate_expression_query_request(
 
     if not all(isinstance(g, str) for g in ids):
         raise ValidationError("All ids must be strings.")
+    
+    if len(ids) > MAX_IDS:
+        raise IdsLimitExceededError(
+            f"Maximum allowed IDs per request is {MAX_IDS}."
+        )
 
     if not columns or not isinstance(columns, list):
         raise ValidationError("columns must be a non-empty list of strings.")
