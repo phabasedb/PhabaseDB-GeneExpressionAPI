@@ -1,7 +1,7 @@
 # Expression Data API
 
-Un servicio Flask ligero que expone consultas de expresión génica y metadatos a través de HTTP.  
-Los clientes pueden obtener perfiles de expresión por gen, realizar consultas por lotes de varios ID con condiciones seleccionadas y recuperar metadatos de conjuntos de datos.
+A lightweight Flask service that exposes gene expression queries and metadata via HTTP.
+Clients can obtain expression profiles by gene, perform batch queries on multiple IDs with selected conditions, and retrieve metadata for datasets.
 
 ---
 
